@@ -1,0 +1,43 @@
+
+--[MEL_DC_Data_Current_Revision] = original table
+ 
+--[MEL_DC_SG_DATA_TO_PI]   = view name
+
+
+
+
+
+
+CREATE VIEW [dbo].[MEL_DC_SG_DATA_TO_PI]   AS
+
+with  Letest_UpdatedAt as (
+SELECT   UpdatedAt FROM [AdaniPower].[dbo].[MEL_DC_Data_Current_Revision]
+order by UpdatedAt desc  
+OFFSET 0 ROWS
+FETCH NEXT 1 ROWS ONLY
+
+) 
+SELECT  CAST(Dateadd(second,1,cast((CONCAT(C.Date,'T',B.ENDTime)) as datetime))  AS datetime) as PI_TIMESTAMP , C.DC_TOTAL as PI_VALUE ,'DC'AS Tvalue,C.UpdatedAt as UpdatedAt_PI
+  FROM [AdaniPower].[dbo].[MEL_DC_Data_Current_Revision] as C 
+  INNER JOIN [AdaniPower].[dbo].[BlockData] AS B ON C.Block = B.BlockNo
+  INNER JOIN Letest_UpdatedAt as  y  on  C.UpdatedAt = y.UpdatedAt
+  where C.Customer_Identity = 'MEL_Total' 
+
+  UNION ALL
+
+  SELECT  CAST(Dateadd(second,1,cast((CONCAT(D.Date,'T',F.ENDTime)) as datetime))  AS datetime) as PI_TIMESTAMP,D.SG_TOTAL as PI_VALUE   , 'SG'AS Tvalue, D.UpdatedAt as UpdatedAt_PI
+  FROM [AdaniPower].[dbo].[MEL_SG_Data_Current_Revision] as D
+  INNER JOIN [AdaniPower].[dbo].[BlockData] AS F ON D.Block = F.BlockNo
+  INNER JOIN Letest_UpdatedAt as  y  on  D.UpdatedAt = y.UpdatedAt
+  where D.Customer_Identity = 'MEL_Total' 
+
+UNION ALL
+
+SELECT  CAST(Dateadd(second,1,cast((CONCAT(X.Date,'T',w.ENDTime)) as datetime))  AS datetime) as PI_TIMESTAMP ,X.FUEL_COST as PI_VALUE   , 'FC'AS Tvalue, X.UpdatedAt as UpdatedAt_PI
+  FROM [AdaniPower].[dbo].[MEL_DC_Data_Current_Revision] as X 
+  INNER JOIN [AdaniPower].[dbo].[BlockData] AS w ON X.Block = w.BlockNo
+  INNER JOIN Letest_UpdatedAt as  y  on  x.UpdatedAt = y.UpdatedAt
+  where X.Customer_Identity = 'MEL_Total' 
+
+
+
